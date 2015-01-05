@@ -1,6 +1,6 @@
 
 
-```
+```go
 writer := goreopen.File("afile")
 logger.SetOutput(writer)
 
