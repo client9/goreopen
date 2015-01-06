@@ -1,9 +1,9 @@
 package goreopen
 
 import (
-	"testing"
 	"io/ioutil"
 	"os"
+	"testing"
 )
 
 // TestReopenAppend -- make sure we always append to an existing file
@@ -35,7 +35,7 @@ func TestReopenAppend(t *testing.T) {
 	}
 
 	// Test that making a new File appends
-	f, err := NewFile(fname)
+	f, err := NewFileWriter(fname)
 	if err != nil {
 		t.Fatalf("Unable to create %s", fname)
 	}
@@ -91,10 +91,9 @@ func TestChangeInode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to close initial file: %s", err)
 	}
-	
 
 	// Test that making a new File appends
-	f, err := NewFile(fname)
+	f, err := NewFileWriter(fname)
 	if err != nil {
 		t.Fatalf("Unable to create %s", fname)
 	}
@@ -104,7 +103,7 @@ func TestChangeInode(t *testing.T) {
 	}
 
 	// Now move file
-	err = os.Rename(fname, fname + ".orig")
+	err = os.Rename(fname, fname+".orig")
 	if err != nil {
 		t.Errorf("Renaming error: %s", err)
 	}

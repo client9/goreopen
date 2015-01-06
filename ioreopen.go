@@ -1,9 +1,11 @@
-package ioreopen
+package goreopen
 
 import (
 	"bufio"
 	"io"
 	"os"
+	"sync"
+	"time"
 )
 
 // Reopener interface defines something that can be reopened
@@ -12,32 +14,35 @@ type Reopener interface {
 }
 
 // ReopenWriter is a writer that also can be reopened
-type ReopenWriter interface {
+type Writer interface {
 	Reopener
 	io.Writer
 }
 
 // ReopenWriteCloser is a io.WriteCloser that can also be reopened
-type ReopenWriteCloser interface {
+type WriteCloser interface {
 	Reopener
 	io.Writer
 	io.Closer
 }
 
-// File that can also be reopened
-type File struct {
+// FileWriter that can also be reopened
+type FileWriter struct {
+	mu   sync.Mutex // ensures close / reopen / write are not called at the same time, protects f
 	f    *os.File
 	Name string
 }
 
 // Close calls the underlyding File.Close()
-func (f *File) Close() error {
-	return f.f.Close()
+func (f *FileWriter) Close() error {
+	f.mu.Lock()
+	err := f.f.Close()
+	f.mu.Unlock()
+	return err
 }
 
-// Reopen the file
-func (f *File) Reopen() error {
-	// f.f.Sync?
+// mutex free version
+func (f *FileWriter) reopen() error {
 	if f.f != nil {
 		f.f.Close()
 		f.f = nil
@@ -52,18 +57,30 @@ func (f *File) Reopen() error {
 	return nil
 }
 
-func (f *File) Write(p []byte) (int, error) {
-	return f.f.Write(p)
+// Reopen the file
+func (f *FileWriter) Reopen() error {
+	f.mu.Lock()
+	err := f.reopen()
+	f.mu.Unlock()
+	return err
 }
 
-// NewFile opens a file for appending and writing and can be reopened.
+// Write implements the stander io.Writer interface
+func (f *FileWriter) Write(p []byte) (int, error) {
+	f.mu.Lock()
+	n, err := f.f.Write(p)
+	f.mu.Unlock()
+	return n, err
+}
+
+// NewFileWriter opens a file for appending and writing and can be reopened.
 // it is a ReopenWriteCloser...
-func NewFile(name string) (*File, error) {
-	writer := File{
+func NewFileWriter(name string) (*FileWriter, error) {
+	writer := FileWriter{
 		f:    nil,
 		Name: name,
 	}
-	err := writer.Reopen()
+	err := writer.reopen()
 	if err != nil {
 		return nil, err
 	}
@@ -71,33 +88,74 @@ func NewFile(name string) (*File, error) {
 }
 
 // BufferedWriter is buffer writer than can be reopned
-type BufferedWriter struct {
-	OrigWriter ReopenWriter
+type BufferedFileWriter struct {
+	mu         sync.Mutex
+	OrigWriter *FileWriter
 	BufWriter  *bufio.Writer
 }
 
 // Reopen implement Reopener
-func (bw *BufferedWriter) Reopen() error {
+func (bw *BufferedFileWriter) Reopen() error {
+	bw.mu.Lock()
 	bw.BufWriter.Flush()
-	bw.OrigWriter.Reopen()
-	bw.BufWriter.Reset(bw.OrigWriter)
+
+	// use non-mutex version since we are using this one
+	err := bw.OrigWriter.reopen()
+
+	bw.BufWriter.Reset(io.Writer(bw.OrigWriter))
+	bw.mu.Unlock()
+
+	return err
+}
+
+func (bw *BufferedFileWriter) Close() error {
+	bw.mu.Lock()
+	bw.BufWriter.Flush()
+	bw.OrigWriter.f.Close()
+	bw.mu.Unlock()
 	return nil
 }
 
 // Write implements io.Writer (and ReopenWriter)
-func (bw *BufferedWriter) Write(p []byte) (int, error) {
-	return bw.BufWriter.Write(p)
+func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
+	bw.mu.Lock()
+	n, err := bw.BufWriter.Write(p)
+
+	// Special Case... if the used space in the buffer is LESS than
+	// the input, then we did a flush in the middle of the line
+	// and the full log line was not sent on its way.
+	if bw.BufWriter.Buffered() < len(p) {
+		bw.BufWriter.Flush()
+	}
+
+	bw.mu.Unlock()
+	return n, err
 }
 
-func NewBufferedWriter(w ReopenWriter) *BufferedWriter {
-	return &BufferedWriter{
-		OrigWriter: w,
-		BufWriter:  bufio.NewWriter(w),
+// flushDaemon periodically flushes the log file buffers.
+func (bw *BufferedFileWriter) flushDaemon() {
+	for range time.NewTicker(flushInterval).C {
+		bw.mu.Lock()
+		bw.BufWriter.Flush()
+		bw.OrigWriter.f.Sync()
+		bw.mu.Unlock()
 	}
 }
 
+const bufferSize = 256 * 1024
+const flushInterval = 30 * time.Second
+
+func NewBufferedFileWriter(w *FileWriter) *BufferedFileWriter {
+	bw := BufferedFileWriter{
+		OrigWriter: w,
+		BufWriter:  bufio.NewWriterSize(w, bufferSize),
+	}
+	go bw.flushDaemon()
+	return &bw
+}
+
 type multiReopenWriter struct {
-	writers []ReopenWriter
+	writers []Writer
 }
 
 func (t *multiReopenWriter) Reopen() error {
@@ -126,8 +184,8 @@ func (t *multiReopenWriter) Write(p []byte) (int, error) {
 // MultiWriter creates a writer that duplicates its writes to all the
 // provided writers, similar to the Unix tee(1) command.
 //  Also allow reopen
-func MultiWriter(writers ...ReopenWriter) ReopenWriter {
-	w := make([]ReopenWriter, len(writers))
+func MultiWriter(writers ...Writer) Writer {
+	w := make([]Writer, len(writers))
 	copy(w, writers)
 	return &multiReopenWriter{w}
 }
@@ -142,12 +200,12 @@ func (nopReopenWriter) Reopen() error {
 
 // NopReopenerWriter turns a normal writer into a ReopenWriter
 //  by doing a NOP on Reopen
-func NopReopenerWriter(w io.Writer) ReopenWriter {
+func NopWriter(w io.Writer) Writer {
 	return nopReopenWriter{w}
 }
 
 // Reopenable versions of os.Stdout and os.Stderr (reopen does nothing)
 var (
-	Stdout = NopReopenerWriter(os.Stdin)
-	Stderr = NopReopenerWriter(os.Stdin)
+	Stdout = NopWriter(os.Stdin)
+	Stderr = NopWriter(os.Stdin)
 )
