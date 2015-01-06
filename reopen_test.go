@@ -1,4 +1,4 @@
-package goreopen
+package reopen
 
 import (
 	"io/ioutil"

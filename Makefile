@@ -7,6 +7,7 @@ test:
 	go test ./...
 
 lint:
+	golint ./...
 	gofmt -w -s . ./example*
 	goimports -w . ./example*
 

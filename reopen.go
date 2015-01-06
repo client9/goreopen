@@ -1,4 +1,4 @@
-package goreopen
+package reopen
 
 import (
 	"bufio"
@@ -13,13 +13,13 @@ type Reopener interface {
 	Reopen() error
 }
 
-// ReopenWriter is a writer that also can be reopened
+// Writer is a writer that also can be reopened
 type Writer interface {
 	Reopener
 	io.Writer
 }
 
-// ReopenWriteCloser is a io.WriteCloser that can also be reopened
+// WriteCloser is a io.WriteCloser that can also be reopened
 type WriteCloser interface {
 	Reopener
 	io.Writer
@@ -87,7 +87,7 @@ func NewFileWriter(name string) (*FileWriter, error) {
 	return &writer, nil
 }
 
-// BufferedWriter is buffer writer than can be reopned
+// BufferedFileWriter is buffer writer than can be reopned
 type BufferedFileWriter struct {
 	mu         sync.Mutex
 	OrigWriter *FileWriter
@@ -108,6 +108,7 @@ func (bw *BufferedFileWriter) Reopen() error {
 	return err
 }
 
+// Close flushes the internal buffer and closes the destination file
 func (bw *BufferedFileWriter) Close() error {
 	bw.mu.Lock()
 	bw.BufWriter.Flush()
@@ -116,7 +117,7 @@ func (bw *BufferedFileWriter) Close() error {
 	return nil
 }
 
-// Write implements io.Writer (and ReopenWriter)
+// Write implements io.Writer (and reopen.Writer)
 func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
 	bw.mu.Lock()
 	n, err := bw.BufWriter.Write(p)
@@ -133,6 +134,7 @@ func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
 }
 
 // flushDaemon periodically flushes the log file buffers.
+//  props to glog
 func (bw *BufferedFileWriter) flushDaemon() {
 	for range time.NewTicker(flushInterval).C {
 		bw.mu.Lock()
@@ -145,6 +147,9 @@ func (bw *BufferedFileWriter) flushDaemon() {
 const bufferSize = 256 * 1024
 const flushInterval = 30 * time.Second
 
+// NewBufferedFileWriter opens a buffered file that is periodically
+//  flushed.
+// TODO: allow size and interval to be passed in.
 func NewBufferedFileWriter(w *FileWriter) *BufferedFileWriter {
 	bw := BufferedFileWriter{
 		OrigWriter: w,
@@ -158,6 +163,7 @@ type multiReopenWriter struct {
 	writers []Writer
 }
 
+// Reopen reopens all child Reopeners
 func (t *multiReopenWriter) Reopen() error {
 	for _, w := range t.writers {
 		err := w.Reopen()
@@ -168,6 +174,7 @@ func (t *multiReopenWriter) Reopen() error {
 	return nil
 }
 
+// Write implements standard io.Write and reopen.Write
 func (t *multiReopenWriter) Write(p []byte) (int, error) {
 	for _, w := range t.writers {
 		n, err := w.Write(p)
@@ -198,8 +205,9 @@ func (nopReopenWriter) Reopen() error {
 	return nil
 }
 
-// NopReopenerWriter turns a normal writer into a ReopenWriter
+// NopWriter turns a normal writer into a ReopenWriter
 //  by doing a NOP on Reopen
+// TODO: better name
 func NopWriter(w io.Writer) Writer {
 	return nopReopenWriter{w}
 }
