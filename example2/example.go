@@ -15,15 +15,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/client9/goreopen"
+	"github.com/client9/reopen"
 )
 
 func main() {
-	f, err := goreopen.NewFileWriter("/tmp/example.log")
+	f, err := reopen.NewFileWriter("/tmp/example.log")
 	if err != nil {
 		log.Fatalf("Unable to set output log: %s", err)
 	}
-	bf := goreopen.NewBufferedFileWriter(f)
+	bf := reopen.NewBufferedFileWriter(f)
 	log.SetOutput(bf)
 
 	sighup := make(chan os.Signal, 2)
