@@ -30,7 +30,8 @@ type WriteCloser interface {
 type FileWriter struct {
 	mu   sync.Mutex // ensures close / reopen / write are not called at the same time, protects f
 	f    *os.File
-	Name string
+	mode os.FileMode
+	name string
 }
 
 // Close calls the underlyding File.Close()
@@ -47,7 +48,7 @@ func (f *FileWriter) reopen() error {
 		f.f.Close()
 		f.f = nil
 	}
-	newf, err := os.OpenFile(f.Name, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+	newf, err := os.OpenFile(f.name, os.O_WRONLY|os.O_APPEND|os.O_CREATE, f.mode)
 	if err != nil {
 		f.f = nil
 		return err
@@ -76,9 +77,16 @@ func (f *FileWriter) Write(p []byte) (int, error) {
 // NewFileWriter opens a file for appending and writing and can be reopened.
 // it is a ReopenWriteCloser...
 func NewFileWriter(name string) (*FileWriter, error) {
+	// Standard default mode
+	return NewFileWriterMode(name, 0666)
+}
+
+// NewFileWriterMode opens a Reopener file with a specific permission
+func NewFileWriterMode(name string, mode os.FileMode) (*FileWriter, error) {
 	writer := FileWriter{
 		f:    nil,
-		Name: name,
+		name: name,
+		mode: mode,
 	}
 	err := writer.reopen()
 	if err != nil {
