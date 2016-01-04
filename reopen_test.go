@@ -23,7 +23,7 @@ func TestReopenAppend(t *testing.T) {
 	// Step 1 -- Create a sample file using normal means
 	forig, err := os.Create(fname)
 	if err != nil {
-		t.Fatalf("Unable to create inital file %s: %s", fname, err)
+		t.Fatalf("Unable to create initial file %s: %s", fname, err)
 	}
 	_, err = forig.Write([]byte("line0\n"))
 	if err != nil {
@@ -85,7 +85,7 @@ func TestChangeInode(t *testing.T) {
 	// Step 1 -- Create a empty sample file
 	forig, err := os.Create(fname)
 	if err != nil {
-		t.Fatalf("Unable to create inital file %s: %s", fname, err)
+		t.Fatalf("Unable to create initial file %s: %s", fname, err)
 	}
 	err = forig.Close()
 	if err != nil {
