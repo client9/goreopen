@@ -1,7 +1,7 @@
 
 Makes a standard os.File "reopenable writer" and allows SIGHUP signals to reopen log files, as needed by [logrotated](https://fedorahosted.org/logrotate/).  This is inspired by the C/Posix (freopen)[http://pubs.opengroup.org/onlinepubs/009695399/functions/freopen.html]
 
-The simple version `reopen.NewFileWriter` does an unbuffered writing.  A
+The simple version `reopen.NewFileWriter` does unbuffered writing.  A
 call to `.Reopen` closes the existing file handle, and then re-opens
 it using the original filename.
 
