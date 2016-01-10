@@ -1,4 +1,4 @@
-[![Go Report Card](http://goreportcard.com/badge/client9/reopen)](http://goreportcard.com/report/client9/reopen)
+[![Go Report Card](http://goreportcard.com/badge/client9/reopen)](http://goreportcard.com/report/client9/reopen) [![GoDoc](https://godoc.org/github.com/client9/reopen?status.svg)](https://godoc.org/github.com/client9/reopen)
 
 Makes a standard os.File "reopenable writer" and allows SIGHUP signals
 to reopen log files, as needed by
