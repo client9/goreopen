@@ -1,4 +1,4 @@
-[![Go Report Card](http://goreportcard.com/badge/client9/reopen)](http://goreportcard.com/report/client9/reopen) [![GoDoc](https://godoc.org/github.com/client9/reopen?status.svg)](https://godoc.org/github.com/client9/reopen) [![Coverage](http://gocover.io/_badge/github.com/client9/reopen)](http://gocover.io/github.com/client9/reopen) [![license](http://img.shields.io/badge/license-apache_2.0-red.svg?style=flat)](https://raw.githubusercontent.com/client9/reopen/master/LICENSE)
+[![Go Report Card](http://goreportcard.com/badge/client9/reopen)](http://goreportcard.com/report/client9/reopen) [![GoDoc](https://godoc.org/github.com/client9/reopen?status.svg)](https://godoc.org/github.com/client9/reopen) [![Coverage](http://gocover.io/_badge/github.com/client9/reopen)](http://gocover.io/github.com/client9/reopen) [![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://raw.githubusercontent.com/client9/reopen/master/LICENSE)
 
 Makes a standard os.File "reopenable writer" and allows SIGHUP signals
 to reopen log files, as needed by
