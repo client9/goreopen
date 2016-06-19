@@ -44,22 +44,22 @@ import (
 func main() {
         // setup logger to write to our new *reopenable* log file
 
-        f, err := goreopen.NewFileWriter("/tmp/example.log")
+        f, err := reopen.NewFileWriter("/tmp/example.log")
         if err != nil {
            log.Fatalf("Unable to set output log: %s", err)
         }
         log.SetOutput(f)
 
-         // Handle SIGHUP
+        // Handle SIGHUP
         //
         // channel is number of signals needed to catch  (more or less)
-        // we only are working with one here, SIGUP
+        // we only are working with one here, SIGHUP
         sighup := make(chan os.Signal, 1)
         signal.Notify(sighup, syscall.SIGHUP)
         go func() {
            for {
                <-sighup
-              fmt.Printf("Got a sighup\n")
+              fmt.Println("Got a sighup")
               f.Reopen()
             }
          }()
