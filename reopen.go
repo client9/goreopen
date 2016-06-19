@@ -3,6 +3,7 @@ package reopen
 import (
 	"bufio"
 	"io"
+	"io/ioutil"
 	"os"
 	"sync"
 	"time"
@@ -223,8 +224,9 @@ func NopWriter(w io.Writer) WriteCloser {
 	return nopReopenWriteCloser{w}
 }
 
-// Reopenable versions of os.Stdout and os.Stderr (reopen does nothing)
+// Reopenable versions of os.Stdout, os.Stderr, /dev/null (reopen does nothing)
 var (
-	Stdout = NopWriter(os.Stdout)
-	Stderr = NopWriter(os.Stderr)
+	Stdout  = NopWriter(os.Stdout)
+	Stderr  = NopWriter(os.Stderr)
+	Discard = NopWriter(ioutil.Discard)
 )
