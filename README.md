@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/client9/reopen.svg)](https://travis-ci.org/client9/reopen) [![Go Report Card](http://goreportcard.com/badge/client9/reopen)](http://goreportcard.com/report/client9/reopen) [![GoDoc](https://godoc.org/github.com/client9/reopen?status.svg)](https://godoc.org/github.com/client9/reopen) [![Coverage](http://gocover.io/_badge/github.com/client9/reopen)](http://gocover.io/github.com/client9/reopen) [![license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://raw.githubusercontent.com/client9/reopen/master/LICENSE)
 
-Makes a standard os.File "reopenable writer" and allows SIGHUP signals
+Makes a standard os.File a "reopenable writer" and allows SIGHUP signals
 to reopen log files, as needed by
 [logrotated](https://fedorahosted.org/logrotate/).  This is inspired
 by the C/Posix
@@ -14,9 +14,11 @@ The more advanced version `reopen.NewBufferedFileWrite` buffers input
 and flushes when the internal buffer is full (with care) or if 30 seconds has
 elapsed.
 
+There is also `reopen.Stderr` and `reopen.Stdout` which implements the `reopen.Reopener` interface (and does nothing on a reopen call)
+
 Samples are in `example1` and `example2`.  The `run.sh` scripts are a
 dumb test where the file is rotated underneath the server, and nothing
-is lost.  (not the most robust test but gives you an idea)
+is lost.  This is not the most robust test but gives you an idea of how it works.
 
 
 Here's some sample code.
