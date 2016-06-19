@@ -222,6 +222,6 @@ func NopWriter(w io.Writer) Writer {
 
 // Reopenable versions of os.Stdout and os.Stderr (reopen does nothing)
 var (
-	Stdout = NopWriter(os.Stdin)
-	Stderr = NopWriter(os.Stdin)
+	Stdout = NopWriter(os.Stdout)
+	Stderr = NopWriter(os.Stderr)
 )
