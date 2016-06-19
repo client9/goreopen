@@ -10,7 +10,7 @@ The simple version `reopen.NewFileWriter` does unbuffered writing.  A
 call to `.Reopen` closes the existing file handle, and then re-opens
 it using the original filename.
 
-The more advanced version `reopen.NewBufferedFileWrite` buffers input
+The more advanced version `reopen.NewBufferedFileWriter` buffers input
 and flushes when the internal buffer is full (with care) or if 30 seconds has
 elapsed.
 
