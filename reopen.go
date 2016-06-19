@@ -22,8 +22,7 @@ type Writer interface {
 // WriteCloser is a io.WriteCloser that can also be reopened
 type WriteCloser interface {
 	Reopener
-	io.Writer
-	io.Closer
+	io.WriteCloser
 }
 
 // FileWriter that can also be reopened
@@ -205,19 +204,23 @@ func MultiWriter(writers ...Writer) Writer {
 	return &multiReopenWriter{w}
 }
 
-type nopReopenWriter struct {
+type nopReopenWriteCloser struct {
 	io.Writer
 }
 
-func (nopReopenWriter) Reopen() error {
+func (nopReopenWriteCloser) Reopen() error {
+	return nil
+}
+
+func (nopReopenWriteCloser) Close() error {
 	return nil
 }
 
 // NopWriter turns a normal writer into a ReopenWriter
 //  by doing a NOP on Reopen
 // TODO: better name
-func NopWriter(w io.Writer) Writer {
-	return nopReopenWriter{w}
+func NopWriter(w io.Writer) WriteCloser {
+	return nopReopenWriteCloser{w}
 }
 
 // Reopenable versions of os.Stdout and os.Stderr (reopen does nothing)
