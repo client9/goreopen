@@ -14,7 +14,9 @@ The more advanced version `reopen.NewBufferedFileWriter` buffers input
 and flushes when the internal buffer is full (with care) or if 30 seconds has
 elapsed.
 
-There is also `reopen.Stderr` and `reopen.Stdout` which implements the `reopen.Reopener` interface (and does nothing on a reopen call)
+There is also `reopen.Stderr` and `reopen.Stdout` which implements the `reopen.Reopener` interface (and does nothing on a reopen call).
+
+`reopen.Discard` wraps `ioutil.Discard`
 
 Samples are in `example1` and `example2`.  The `run.sh` scripts are a
 dumb test where the file is rotated underneath the server, and nothing
