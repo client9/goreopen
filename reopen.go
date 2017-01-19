@@ -17,6 +17,7 @@ type Reopener interface {
 // Writer is a writer that also can be reopened
 type Writer interface {
 	Reopener
+	Flush()
 	io.Writer
 }
 
@@ -199,6 +200,11 @@ func (t *multiReopenWriter) Write(p []byte) (int, error) {
 		}
 	}
 	return len(p), nil
+}
+
+// Flush implements bufio.Writer
+func (t *multiReopenWriter) Flush() {
+	return
 }
 
 // MultiWriter creates a writer that duplicates its writes to all the
