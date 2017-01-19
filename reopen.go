@@ -153,7 +153,7 @@ func (bw *BufferedFileWriter) Flush() {
 //  props to glog
 func (bw *BufferedFileWriter) flushDaemon() {
 	for range time.NewTicker(flushInterval).C {
-		Flush()
+		bw.Flush()
 	}
 }
 
