@@ -141,14 +141,19 @@ func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
+// Flush flushes the buffer.
+func (bw *BufferedFileWriter) Flush() {
+	bw.mu.Lock()
+	bw.BufWriter.Flush()
+	bw.OrigWriter.f.Sync()
+	bw.mu.Unlock()
+}
+
 // flushDaemon periodically flushes the log file buffers.
 //  props to glog
 func (bw *BufferedFileWriter) flushDaemon() {
 	for range time.NewTicker(flushInterval).C {
-		bw.mu.Lock()
-		bw.BufWriter.Flush()
-		bw.OrigWriter.f.Sync()
-		bw.mu.Unlock()
+		bw.Flush()
 	}
 }
 
