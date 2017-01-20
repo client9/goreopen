@@ -157,8 +157,13 @@ const flushInterval = 30 * time.Second
 
 // NewBufferedFileWriter opens a buffered file that is periodically
 //  flushed.
-// TODO: allow size and interval to be passed in.
 func NewBufferedFileWriter(w *FileWriter) *BufferedFileWriter {
+	return NewBufferedFileWriterSize(w, bufferSize, flushInterval)
+}
+
+// NewBufferedFileWriterSize opens a buffered file with the given size that is periodically
+//  flushed on the given interval.
+func NewBufferedFileWriterSize(w *FileWriter, size int, flush time.Duration) *BufferedFileWriter {
 	bw := BufferedFileWriter{
 		OrigWriter: w,
 		BufWriter:  bufio.NewWriterSize(w, bufferSize),
