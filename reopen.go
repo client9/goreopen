@@ -141,14 +141,19 @@ func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
+// Flush flushes the buffer.
+func (bw *BufferedFileWriter) Flush() {
+	bw.mu.Lock()
+	bw.BufWriter.Flush()
+	bw.OrigWriter.f.Sync()
+	bw.mu.Unlock()
+}
+
 // flushDaemon periodically flushes the log file buffers.
 //  props to glog
 func (bw *BufferedFileWriter) flushDaemon() {
 	for range time.NewTicker(flushInterval).C {
-		bw.mu.Lock()
-		bw.BufWriter.Flush()
-		bw.OrigWriter.f.Sync()
-		bw.mu.Unlock()
+		bw.Flush()
 	}
 }
 
@@ -157,8 +162,13 @@ const flushInterval = 30 * time.Second
 
 // NewBufferedFileWriter opens a buffered file that is periodically
 //  flushed.
-// TODO: allow size and interval to be passed in.
 func NewBufferedFileWriter(w *FileWriter) *BufferedFileWriter {
+	return NewBufferedFileWriterSize(w, bufferSize, flushInterval)
+}
+
+// NewBufferedFileWriterSize opens a buffered file with the given size that is periodically
+//  flushed on the given interval.
+func NewBufferedFileWriterSize(w *FileWriter, size int, flush time.Duration) *BufferedFileWriter {
 	bw := BufferedFileWriter{
 		OrigWriter: w,
 		BufWriter:  bufio.NewWriterSize(w, bufferSize),
