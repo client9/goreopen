@@ -151,8 +151,8 @@ func (bw *BufferedFileWriter) Flush() {
 
 // flushDaemon periodically flushes the log file buffers.
 //  props to glog
-func (bw *BufferedFileWriter) flushDaemon() {
-	for range time.NewTicker(flushInterval).C {
+func (bw *BufferedFileWriter) flushDaemon(interval time.Duration) {
+	for range time.NewTicker(interval).C {
 		bw.Flush()
 	}
 }
@@ -171,9 +171,9 @@ func NewBufferedFileWriter(w *FileWriter) *BufferedFileWriter {
 func NewBufferedFileWriterSize(w *FileWriter, size int, flush time.Duration) *BufferedFileWriter {
 	bw := BufferedFileWriter{
 		OrigWriter: w,
-		BufWriter:  bufio.NewWriterSize(w, bufferSize),
+		BufWriter:  bufio.NewWriterSize(w, size),
 	}
-	go bw.flushDaemon()
+	go bw.flushDaemon(flush)
 	return &bw
 }
 
