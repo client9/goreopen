@@ -98,6 +98,8 @@ func NewFileWriterMode(name string, mode os.FileMode) (*FileWriter, error) {
 // BufferedFileWriter is buffer writer than can be reopned
 type BufferedFileWriter struct {
 	mu         sync.Mutex
+	quitChan   chan bool
+	done       bool
 	OrigWriter *FileWriter
 	BufWriter  *bufio.Writer
 }
@@ -118,7 +120,9 @@ func (bw *BufferedFileWriter) Reopen() error {
 
 // Close flushes the internal buffer and closes the destination file
 func (bw *BufferedFileWriter) Close() error {
+	bw.quitChan <- true
 	bw.mu.Lock()
+	bw.done = true
 	bw.BufWriter.Flush()
 	bw.OrigWriter.f.Close()
 	bw.mu.Unlock()
@@ -144,16 +148,23 @@ func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
 // Flush flushes the buffer.
 func (bw *BufferedFileWriter) Flush() {
 	bw.mu.Lock()
+	// could add check if bw.done already
+	//  should never happen
 	bw.BufWriter.Flush()
 	bw.OrigWriter.f.Sync()
 	bw.mu.Unlock()
 }
 
 // flushDaemon periodically flushes the log file buffers.
-//  props to glog
 func (bw *BufferedFileWriter) flushDaemon(interval time.Duration) {
-	for range time.NewTicker(interval).C {
-		bw.Flush()
+	ticker := time.Tick(interval)
+	for {
+		select {
+		case <-bw.quitChan:
+			return
+		case <-ticker:
+			bw.Flush()
+		}
 	}
 }
 
@@ -170,6 +181,7 @@ func NewBufferedFileWriter(w *FileWriter) *BufferedFileWriter {
 //  flushed on the given interval.
 func NewBufferedFileWriterSize(w *FileWriter, size int, flush time.Duration) *BufferedFileWriter {
 	bw := BufferedFileWriter{
+		quitChan:   make(chan bool, 1),
 		OrigWriter: w,
 		BufWriter:  bufio.NewWriterSize(w, size),
 	}

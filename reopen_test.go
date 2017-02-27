@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 )
 
 // TestReopenAppend -- make sure we always append to an existing file
@@ -131,4 +132,21 @@ func TestChangeInode(t *testing.T) {
 	if outstr != "line2\n" {
 		t.Errorf("Result was %s", outstr)
 	}
+}
+
+func TestBufferedWriter(t *testing.T) {
+	const fname = "/tmp/foo"
+	fw, err := NewFileWriter(fname)
+	if err != nil {
+		t.Fatalf("Unable to create test file %q: %s", fname, err)
+	}
+	logger := NewBufferedFileWriterSize(fw, 0, time.Millisecond*100)
+	// make sure 3-4 flush events happen
+	time.Sleep(time.Millisecond * 4)
+
+	// close should shutdown the flush
+	logger.Close()
+
+	// if flush is still happening we should get one or two here
+	time.Sleep(time.Millisecond * 200)
 }
