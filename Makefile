@@ -22,7 +22,6 @@ ci: build test lint
 
 docker-ci:
 	docker run --rm \
-		-e COVERALLS_REPO_TOKEN=$(COVERALLS_REPO_TOKEN) \
 		-v $(PWD):/go/src/github.com/client9/reopen \
 		-w /go/src/github.com/client9/reopen \
 		nickg/golang-dev-docker \
