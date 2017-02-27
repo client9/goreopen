@@ -3,7 +3,7 @@ package main
 /* Similar to previous example but uses a BufferedFileWriter
  * When buf is full OR every 30 seconds, the buffer is flushed to disk
  *
- * care is done to make sure transiet or partial log messages are not written.
+ * care is done to make sure transient or partial log messages are not written.
  *
  * Note the signal handler catches SIGTERM to flush out and existing buffers
  */

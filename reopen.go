@@ -228,8 +228,7 @@ func (nopReopenWriteCloser) Close() error {
 }
 
 // NopWriter turns a normal writer into a ReopenWriter
-//  by doing a NOP on Reopen
-// TODO: better name
+//  by doing a NOP on Reopen.   See https://en.wikipedia.org/wiki/NOP
 func NopWriter(w io.Writer) WriteCloser {
 	return nopReopenWriteCloser{w}
 }
