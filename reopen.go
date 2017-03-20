@@ -157,12 +157,13 @@ func (bw *BufferedFileWriter) Flush() {
 
 // flushDaemon periodically flushes the log file buffers.
 func (bw *BufferedFileWriter) flushDaemon(interval time.Duration) {
-	ticker := time.Tick(interval)
+	ticker := time.NewTicker(interval)
 	for {
 		select {
 		case <-bw.quitChan:
+			ticker.Stop()
 			return
-		case <-ticker:
+		case <-ticker.C:
 			bw.Flush()
 		}
 	}
