@@ -1,18 +1,29 @@
-all: build test lint
 
-build:
+all:
 	go build ./...
-
-test:
-	go test ./...
-
-lint:
-	golint ./...
-	gofmt -w -s . ./example*
-	goimports -w . ./example*
+	gometalinter \
+                --vendor \
+                --vendored-linters \
+                --deadline=60s \
+                --disable-all \
+                --enable=goimports \
+                --enable=aligncheck \
+                --enable=vetshadow \
+                --enable=varcheck \
+                --enable=structcheck \
+                --enable=deadcode \
+                --enable=ineffassign \
+                --enable=unconvert \
+                --enable=goconst \
+                --enable=golint \
+                --enable=gosimple \
+                --enable=gofmt \
+                --enable=misspell \
+                --enable=staticcheck \
+                .
+	go test -cover .
 
 clean:
-	rm -f *~ ./example*/*~
 	rm -f ./example1/example1
 	rm -f ./example2/example2
 	go clean ./...

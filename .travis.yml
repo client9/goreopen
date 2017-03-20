@@ -1,5 +1,4 @@
-sudo: required
-dist: trusty
-language: generic
-script:
-  - make -e docker-ci
+language: go
+install:
+        - go get -u github.com/alecthomas/gometalinter
+        - gometalinter --install
