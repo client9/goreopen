@@ -1,3 +1,4 @@
+sudo: false
 language: go
 install:
         - go get -u github.com/alecthomas/gometalinter
