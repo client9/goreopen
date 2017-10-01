@@ -20,6 +20,7 @@ all:
                 --enable=gofmt \
                 --enable=misspell \
                 --enable=staticcheck \
+                --enable=errcheck \
                 .
 	go test -cover .
 
