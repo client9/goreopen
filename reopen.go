@@ -45,7 +45,7 @@ func (f *FileWriter) Close() error {
 // mutex free version
 func (f *FileWriter) reopen() error {
 	if f.f != nil {
-		f.f.Close()
+		f.f.Close() // nolint: errcheck
 		f.f = nil
 	}
 	newf, err := os.OpenFile(f.name, os.O_WRONLY|os.O_APPEND|os.O_CREATE, f.mode)
@@ -107,7 +107,7 @@ type BufferedFileWriter struct {
 // Reopen implement Reopener
 func (bw *BufferedFileWriter) Reopen() error {
 	bw.mu.Lock()
-	bw.BufWriter.Flush()
+	bw.BufWriter.Flush() // nolint: errcheck
 
 	// use non-mutex version since we are using this one
 	err := bw.OrigWriter.reopen()
@@ -123,8 +123,8 @@ func (bw *BufferedFileWriter) Close() error {
 	bw.quitChan <- true
 	bw.mu.Lock()
 	bw.done = true
-	bw.BufWriter.Flush()
-	bw.OrigWriter.f.Close()
+	bw.BufWriter.Flush()    // nolint: errcheck
+	bw.OrigWriter.f.Close() // nolint: errcheck
 	bw.mu.Unlock()
 	return nil
 }
@@ -138,7 +138,7 @@ func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
 	// the input, then we did a flush in the middle of the line
 	// and the full log line was not sent on its way.
 	if bw.BufWriter.Buffered() < len(p) {
-		bw.BufWriter.Flush()
+		bw.BufWriter.Flush() // nolint: errcheck
 	}
 
 	bw.mu.Unlock()
@@ -150,8 +150,8 @@ func (bw *BufferedFileWriter) Flush() {
 	bw.mu.Lock()
 	// could add check if bw.done already
 	//  should never happen
-	bw.BufWriter.Flush()
-	bw.OrigWriter.f.Sync()
+	bw.BufWriter.Flush()   // nolint: errcheck
+	bw.OrigWriter.f.Sync() // nolint: errcheck
 	bw.mu.Unlock()
 }
 

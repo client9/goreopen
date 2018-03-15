@@ -19,6 +19,7 @@ build:  ## build and lint
                 --enable=gofmt \
                 --enable=misspell \
                 --enable=staticcheck \
+                --enable=errcheck \
                 .
 test:  ## just test
 	go test -cover .

@@ -108,7 +108,7 @@ func TestChangeInode(t *testing.T) {
 	if err != nil {
 		t.Errorf("Renaming error: %s", err)
 	}
-	f.Write([]byte("after1\n"))
+	f.Write([]byte("after1\n")) // nolint: errcheck
 
 	// Test that reopen always appends
 	err = f.Reopen()
@@ -145,7 +145,7 @@ func TestBufferedWriter(t *testing.T) {
 	time.Sleep(time.Millisecond * 4)
 
 	// close should shutdown the flush
-	logger.Close()
+	logger.Close() // nolint: errcheck
 
 	// if flush is still happening we should get one or two here
 	time.Sleep(time.Millisecond * 200)
