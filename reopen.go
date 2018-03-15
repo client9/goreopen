@@ -100,19 +100,19 @@ type BufferedFileWriter struct {
 	mu         sync.Mutex
 	quitChan   chan bool
 	done       bool
-	OrigWriter *FileWriter
-	BufWriter  *bufio.Writer
+	origWriter *FileWriter
+	bufWriter  *bufio.Writer
 }
 
 // Reopen implement Reopener
 func (bw *BufferedFileWriter) Reopen() error {
 	bw.mu.Lock()
-	bw.BufWriter.Flush()
+	bw.bufWriter.Flush()
 
 	// use non-mutex version since we are using this one
-	err := bw.OrigWriter.reopen()
+	err := bw.origWriter.reopen()
 
-	bw.BufWriter.Reset(io.Writer(bw.OrigWriter))
+	bw.bufWriter.Reset(io.Writer(bw.origWriter))
 	bw.mu.Unlock()
 
 	return err
@@ -123,8 +123,8 @@ func (bw *BufferedFileWriter) Close() error {
 	bw.quitChan <- true
 	bw.mu.Lock()
 	bw.done = true
-	bw.BufWriter.Flush()
-	bw.OrigWriter.f.Close()
+	bw.bufWriter.Flush()
+	bw.origWriter.f.Close()
 	bw.mu.Unlock()
 	return nil
 }
@@ -132,13 +132,13 @@ func (bw *BufferedFileWriter) Close() error {
 // Write implements io.Writer (and reopen.Writer)
 func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
 	bw.mu.Lock()
-	n, err := bw.BufWriter.Write(p)
+	n, err := bw.bufWriter.Write(p)
 
 	// Special Case... if the used space in the buffer is LESS than
 	// the input, then we did a flush in the middle of the line
 	// and the full log line was not sent on its way.
-	if bw.BufWriter.Buffered() < len(p) {
-		bw.BufWriter.Flush()
+	if bw.bufWriter.Buffered() < len(p) {
+		bw.bufWriter.Flush()
 	}
 
 	bw.mu.Unlock()
@@ -150,8 +150,8 @@ func (bw *BufferedFileWriter) Flush() {
 	bw.mu.Lock()
 	// could add check if bw.done already
 	//  should never happen
-	bw.BufWriter.Flush()
-	bw.OrigWriter.f.Sync()
+	bw.bufWriter.Flush()
+	bw.origWriter.f.Sync()
 	bw.mu.Unlock()
 }
 
@@ -183,8 +183,8 @@ func NewBufferedFileWriter(w *FileWriter) *BufferedFileWriter {
 func NewBufferedFileWriterSize(w *FileWriter, size int, flush time.Duration) *BufferedFileWriter {
 	bw := BufferedFileWriter{
 		quitChan:   make(chan bool, 1),
-		OrigWriter: w,
-		BufWriter:  bufio.NewWriterSize(w, size),
+		origWriter: w,
+		bufWriter:  bufio.NewWriterSize(w, size),
 	}
 	go bw.flushDaemon(flush)
 	return &bw
