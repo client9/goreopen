@@ -1,25 +1,7 @@
 
-build:  ## build and lint
-	go build ./...
-	gometalinter \
-                --vendor \
-                --vendored-linters \
-                --deadline=60s \
-                --disable-all \
-                --enable=goimports \
-                --enable=vetshadow \
-                --enable=varcheck \
-                --enable=structcheck \
-                --enable=deadcode \
-                --enable=ineffassign \
-                --enable=unconvert \
-                --enable=goconst \
-                --enable=golint \
-                --enable=gosimple \
-                --enable=gofmt \
-                --enable=misspell \
-                --enable=staticcheck \
-                .
+build: hooks ## build and lint
+	./scripts/build.sh
+
 test:  ## just test
 	go test -cover .
 
@@ -28,6 +10,13 @@ clean: ## cleanup
 	rm -f ./example2/example2
 	go clean ./...
 	git gc
+
+# https://www.client9.com/automatically-install-git-hooks/
+.git/hooks/pre-commit: scripts/pre-commit.sh
+	cp -f scripts/pre-commit.sh .git/hooks/pre-commit
+.git/hooks/commit-msg: scripts/commit-msg.sh
+	cp -f scripts/commit-msg.sh .git/hooks/commit-msg
+hooks: .git/hooks/pre-commit .git/hooks/commit-msg  ## install git precommit hooks
 
 # https://www.client9.com/self-documenting-makefiles/
 help:
