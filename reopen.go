@@ -74,6 +74,14 @@ func (f *FileWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
+// Fd returns the file descriptor of the underlying file.
+func (f *FileWriter) Fd() uintptr {
+	f.mu.Lock()
+	n := f.f.Fd()
+	f.mu.Unlock()
+	return n
+}
+
 // NewFileWriter opens a file for appending and writing and can be reopened.
 // it is a ReopenWriteCloser...
 func NewFileWriter(name string) (*FileWriter, error) {
